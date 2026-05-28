@@ -1,0 +1,203 @@
+{% extends "base.html" %} {% block content %}
+<div class="container mt-5 pt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h3 class="mb-0">Checkout</h3>
+        </div>
+        <div class="card-body">
+          <div class="order-summary mb-4">
+            <h4>Order Summary</h4>
+            <div class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Quantity</th>
+                    <th class="text-end">Price</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for item in cart_items %}
+                  <tr>
+                    <td>{{ item.product.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td class="text-end">
+                      ${{ "%.2f"|format(item.product.price * item.quantity) }}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                  <tr>
+                    <td colspan="2">Subtotal</td>
+                    <td class="text-end">
+                      ${{ "%.2f"|format(original_total) }}
+                    </td>
+                  </tr>
+                  <tr class="text-success">
+                    <td colspan="2">Discount (20%)</td>
+                    <td class="text-end">-${{ "%.2f"|format(discount) }}</td>
+                  </tr>
+                  <tr class="table-active fw-bold">
+                    <td colspan="2">Final Total</td>
+                    <td class="text-end">${{ "%.2f"|format(final_total) }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <form
+            method="POST"
+            action="{{ url_for('process_payment') }}"
+            id="payment-form"
+          >
+            <h4 class="mb-3">Shipping Details</h4>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label for="shipping-name" class="form-label">Full Name</label>
+                <input type="text" class="form-control" id="shipping-name" name="shipping_name" required />
+              </div>
+              <div class="col-md-6">
+                <label for="shipping-phone" class="form-label">Phone</label>
+                <input type="tel" class="form-control" id="shipping-phone" name="shipping_phone" required />
+              </div>
+              <div class="col-12">
+                <label for="shipping-address" class="form-label">Address</label>
+                <textarea class="form-control" id="shipping-address" name="shipping_address" rows="2" required></textarea>
+              </div>
+            </div>
+
+            <h4 class="mb-3">Payment Method</h4>
+            <div class="row g-3">
+              <div class="col-12">
+                <div class="form-check mb-3">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="payment_method"
+                    id="cash"
+                    value="cash"
+                    required
+                  />
+                  <label class="form-check-label" for="cash">
+                    <i class="fas fa-money-bill-wave me-2"></i>Cash on Delivery
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="payment_method"
+                    id="card"
+                    value="card"
+                    required
+                  />
+                  <label class="form-check-label" for="card">
+                    <i class="fas fa-credit-card me-2"></i>Credit/Debit Card (demo gateway)
+                  </label>
+                </div>
+                <div class="form-check mt-3">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="payment_method"
+                    id="stripe"
+                    value="stripe"
+                    required
+                  />
+                  <label class="form-check-label" for="stripe">
+                    <i class="fas fa-lock me-2"></i>Stripe Hosted Checkout
+                  </label>
+                </div>
+              </div>
+
+              <!-- Card Payment Details (shown only when card is selected) -->
+              <div id="card-details" class="col-12" style="display: none">
+                <div class="mb-3">
+                  <label for="card-number" class="form-label"
+                    >Card Number</label
+                  >
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="card-number"
+                    name="card_number"
+                    placeholder="1234 5678 9012 3456"
+                    maxlength="19"
+                  />
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label for="expiry" class="form-label">Expiry Date</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="expiry"
+                      name="expiry"
+                      placeholder="MM/YY"
+                    />
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label for="cvv" class="form-label">CVV</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="cvv"
+                      name="cvv"
+                      placeholder="123"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <button type="submit" class="btn btn-primary w-100">
+                  <i class="fas fa-lock me-2"></i>Complete Order
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  $(document).ready(function () {
+    // Toggle card details based on payment method selection
+    $('input[name="payment_method"]').change(function () {
+      if ($(this).val() === "card") {
+        $("#card-details").slideDown();
+        $("#card-details input").prop("required", true);
+      } else {
+        $("#card-details").slideUp();
+        $("#card-details input").prop("required", false);
+      }
+    });
+
+    // Format card number input
+    $("#card-number").on("input", function () {
+      let value = $(this).val().replace(/\D/g, "");
+      value = value.replace(/(\d{4})(?=\d)/g, "$1 ");
+      $(this).val(value);
+    });
+
+    // Format expiry date input
+    $("#expiry").on("input", function () {
+      let value = $(this).val().replace(/\D/g, "");
+      if (value.length > 2) {
+        value = value.substring(0, 2) + "/" + value.substring(2, 4);
+      }
+      $(this).val(value);
+    });
+
+    // Format CVV input
+    $("#cvv").on("input", function () {
+      let value = $(this).val().replace(/\D/g, ""); //da bta3 alslider bta3 details visa
+      $(this).val(value);
+    });
+  });
+</script>
+{% endblock %}

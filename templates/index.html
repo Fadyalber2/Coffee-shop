@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="hero-section text-center">
+    <div class="container">
+        <h1 class="display-3 mb-4 floating">Welcome to Cozy Coffee</h1>
+        <p class="lead mb-5">Where every cup tells a story, and every sip is an adventure</p>
+        {% if not current_user.is_authenticated %}
+            <div class="mt-4">
+                <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg me-3">Start Your Journey</a>
+                <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg">Welcome Back</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="text-center" style="background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5));
+            border-radius: 20px;
+            margin-top: 50px;" >
+                <div class="feature-icon">
+                    <i class="fas fa-coffee"></i>
+                </div>
+                <h3 class="h4 mb-3" style="color: white;">Artisanal Coffee</h3>
+                <p class="text-muted" >Expertly roasted beans from the world's finest coffee regions, crafted to perfection</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-center" style="background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5));
+            border-radius: 20px;
+            margin-top: 50px;">
+                <div class="feature-icon">
+                    <i class="fas fa-home"></i>
+                </div>
+                <h3 class="h4 mb-3" style="color: white;">Cozy Atmosphere</h3>
+                <p class="text-muted" >A warm, inviting space where comfort meets style, perfect for every occasion</p>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="text-center" style="background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5));
+            border-radius: 20px;
+            margin-top: 50px;">
+                <div class="feature-icon">
+                    <i class="fas fa-heart"></i>
+                </div>
+                <h3 class="h4 mb-3" style="color: white;">Made with Love</h3>
+                <p class="text-muted">Every drink is crafted with passion by our expert baristas who love what they do</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5 pt-5">
+        <div class="col-md-6">
+            <img src="/static/images/happy-waitress-giving-coffee-customers-while-serving-them-coffee-shop.jpg" alt="Coffee being served" class="img-fluid rounded-3 shadow-lg">
+        </div>
+        <div class="col-md-6 d-flex align-items-center">
+            <div class="ps-md-5">
+                <h2 class="h1 mb-4" style="color: white;">Discover Our Menu</h2>
+                <p class="lead mb-4" style="color: white;">From classic espresso to signature creations, explore our carefully curated selection of drinks and treats.</p>
+                <a href="{{ url_for('menu') }}" class="btn btn-primary btn-lg">View Menu</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if current_user.is_authenticated %}
+<div class="cart-float">
+    <a href="{{ url_for('cart') }}" class="btn btn-primary">
+        <i class="fas fa-shopping-cart me-2"></i>View Cart
+    </a>
+</div>
+{% endif %}
+{% endblock %}
