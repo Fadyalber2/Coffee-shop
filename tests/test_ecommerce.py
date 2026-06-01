@@ -82,6 +82,25 @@ def test_registration_hashes_password_and_login_still_works(client):
     assert b"buyer" in response.data
 
 
+def test_login_prevents_open_redirect(client):
+    register(client)
+    # Attempt to redirect to a malicious external site
+    response = client.post(
+        "/login?next=http://malicious.com",
+        data={"username": "buyer", "password": "secret123"},
+        follow_redirects=False,
+    )
+    assert response.status_code == 302
+    assert response.headers["Location"] == "/" or response.headers["Location"] == "http://localhost/"
+
+
+def test_security_headers_are_present(client):
+    response = client.get("/")
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
+    assert response.headers["X-Frame-Options"] == "SAMEORIGIN"
+    assert "Content-Security-Policy" in response.headers
+
+
 def test_menu_supports_search_category_and_price_filters(client):
     response = client.get("/menu?q=latte&category=drink&min_price=4&max_price=5")
 
