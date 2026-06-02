@@ -578,6 +578,96 @@ def api_orders():
         for order in orders
     ])
 
+@app.route('/reset_password', methods=['GET', 'POST'])
+def reset_password():
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        email = request.form.get('email', '').strip()
+        new_password = request.form.get('new_password', '')
+        confirm_password = request.form.get('confirm_password', '')
+
+        if not all([username, email, new_password, confirm_password]):
+            flash_message('Please fill in all fields')
+            return redirect(url_for('reset_password'))
+        if new_password != confirm_password:
+            flash_message('Passwords do not match')
+            return redirect(url_for('reset_password'))
+        if len(new_password) < 6:
+            flash_message('Password must be at least 6 characters')
+            return redirect(url_for('reset_password'))
+
+        user = User.query.filter_by(username=username, email=email).first()
+        if not user:
+            flash_message('No account found with that username and email')
+            return redirect(url_for('reset_password'))
+
+        user.set_password(new_password)
+        db.session.commit()
+        flash_message('Password reset successful! Please log in.')
+        return redirect(url_for('login'))
+    return render_template('reset_password.html')
+
+@app.route('/edit_product/<int:product_id>', methods=['POST'])
+@login_required
+def edit_product(product_id):
+    if not current_user.is_admin:
+        abort(403)
+    product = db.get_or_404(Product, product_id)
+    try:
+        name = request.form.get('name', '').strip()
+        category = request.form.get('category', '').strip()
+        price = float(request.form.get('price', 0))
+        description = request.form.get('description', '').strip()
+
+        if not all([name, category, description]) or price < 0:
+            flash_message('Please fill in all fields correctly', 'danger')
+            return redirect(url_for('admin'))
+
+        product.name = name
+        product.category = category
+        product.price = price
+        product.description = description
+
+        file = request.files.get('image')
+        if file and file.filename != '':
+            if allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                product.image_url = f'/static/images/{filename}'
+            else:
+                flash_message('Invalid file type. Allowed: png, jpg, jpeg, gif', 'danger')
+                return redirect(url_for('admin'))
+
+        db.session.commit()
+        flash_message(f'Product "{name}" updated successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash_message(f'Error updating product: {str(e)}', 'danger')
+    return redirect(url_for('admin'))
+
+@app.route('/delete_user/<int:user_id>', methods=['POST'])
+@login_required
+def delete_user(user_id):
+    if not current_user.is_admin:
+        abort(403)
+    if user_id == current_user.id:
+        flash_message('Cannot delete your own account', 'danger')
+        return redirect(url_for('admin'))
+    user = db.get_or_404(User, user_id)
+    if user.is_admin:
+        flash_message('Cannot delete another admin account', 'danger')
+        return redirect(url_for('admin'))
+    try:
+        CartItem.query.filter_by(user_id=user_id).delete()
+        db.session.delete(user)
+        db.session.commit()
+        flash_message(f'User "{user.username}" deleted successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash_message(f'Error deleting user: {str(e)}', 'danger')
+    return redirect(url_for('admin'))
+
 @app.route('/delete_product/<int:product_id>', methods=['POST'])
 @login_required
 def delete_product(product_id):
