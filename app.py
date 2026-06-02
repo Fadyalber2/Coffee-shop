@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, abort, session
+from urllib.parse import urlsplit
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from datetime import UTC, datetime, timedelta
@@ -18,7 +19,7 @@ app = Flask(__name__)
 # 2. Flash Messages: Enables temporary message encryption between page loads
 # 3. CSRF Protection: Prevents cross-site request forgery attacks on forms
 # 4. Cookie Security: Signs cookies to prevent client-side manipulation
-app.config['SECRET_KEY'] = 'dev-key-12345'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-12345')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'instance', 'coffee_shop.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False #ay 7aga btzed bt2l f db mby3osh y3ml reload 3shan tt8ir hya auto btt8ir
 app.config['SESSION_PERMANENT'] = False  # Never use permanent sessions
@@ -37,6 +38,14 @@ db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+
+# Add security headers to all responses
+@app.after_request
+def add_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; font-src 'self' https://cdnjs.cloudflare.com; img-src 'self' data:;"
+    return response
 
 # Clear sessions on each request
 @app.before_request
@@ -275,6 +284,9 @@ def login():
                 db.session.commit()
             login_user(user, remember=False)  # Never remember sessions
             next_page = request.args.get('next')
+            # Security: Validate next_page to prevent open redirect
+            if next_page and urlsplit(next_page).netloc != '':
+                next_page = url_for('home')
             return redirect(next_page or url_for('home'))
         else:
             flash_message('Invalid username or password')
