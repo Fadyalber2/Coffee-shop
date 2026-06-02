@@ -7,7 +7,7 @@
         <p class="lead text-muted">Discover our handcrafted selection of premium coffee and treats</p>
     </div>
 
-    <form class="row g-3 align-items-end bg-light p-3 rounded mb-5" method="GET" action="{{ url_for('menu') }}">
+    <form class="menu-filter row g-3 align-items-end bg-light p-3 mb-5" method="GET" action="{{ url_for('menu') }}">
         <div class="col-md-4">
             <label for="q" class="form-label">Search</label>
             <input type="search" class="form-control" id="q" name="q" value="{{ search }}" placeholder="Latte, croissant...">
@@ -106,7 +106,7 @@
     {% endif %}
 
     {% if not drinks and not foods %}
-    <div class="text-center bg-light p-5 rounded">
+    <div class="text-center bg-light p-5 rounded-3">
         <h2 class="h4">No products found</h2>
         <a href="{{ url_for('menu') }}" class="btn btn-primary mt-3">Clear Filters</a>
     </div>
